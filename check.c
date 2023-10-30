@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 #include <sys/queue.h>
-#include<math.h>
+#include <math.h>
+#include <stdbool.h>
 /*
 #include "./headers/rte_ether.h"
 #include <headers/rte_ip.h>
@@ -138,7 +139,7 @@ int encap_vxln_pkt(struct encap_pkt *encap_pkt_info)
 	unsigned char temp_buff[148];
 	memcpy(temp_buff,outer_header,sizeof(outer_header));
 	memcpy(temp_buff+sizeof(outer_header),inner_header,sizeof(inner_header));
-	memcpy(encap_pkt_info,temp_buff,sizeof(encap_pkt)); 
+	memcpy(encap_pkt_info,temp_buff,sizeof(encap_pkt_info)); 
 }
 /*
  * decap_vxlan_pkt() decapsulated the encapsulated packet and 
@@ -146,18 +147,18 @@ int encap_vxln_pkt(struct encap_pkt *encap_pkt_info)
  */
 unsigned char *decap_vxlan_pkt(struct encap_pkt *encap_pkt_2, unsigned char *orginal_buff){
 	unsigned char temp_buff[148]; 
-	memcpy(temp_buff,encap_pkt_2,sizeof(encap_pkt));
+	memcpy(temp_buff,encap_pkt_2,sizeof(encap_pkt_2));
 	memcpy(orginal_buff,temp_buff+50,62);
 }
 
-struct a{
+typedef struct a{
 	int ele1; 
 };
-struct b{
-	a  eleb_1; 
+typedef struct b{
+	struct a  eleb_1; 
 };
 
-struct c
+typedef struct c
 {
 	union check
 	{ 
@@ -173,17 +174,17 @@ struct logical_port{
 	uint32_t PINs; 
 	uint32_t lpbk_port; 
 };
-
+/*
 struct MVP {
 	bool mvp_port_indicator[3] = {0,0,0}; 
 	logical_port dst_port;  
-}; 
+}; */ 
 /*
 // 3 parts involved in Output Logical Port Generations: 
 1) Match Action setting a logical Port 
 2) VLAN logical port filtering 
 3) Adding Promiscuous Ports */
-
+/*
 void logical_port_gen(struct MVP obj1, struct logical_port logical_port1){
 
 	if (obj1.mvp_port_indicator[0] == true){
@@ -196,7 +197,7 @@ void logical_port_gen(struct MVP obj1, struct logical_port logical_port1){
 		logical_port1.PINs = 0xffffffff; 
 	}
 }
-
+*/
 /**
  * show_mem_rep() shows the number to stored in memory location. 
  * It will show whether the device under test is saving the number 
@@ -385,7 +386,7 @@ rte_eal_cpu_init(void)
 		lcore_config[lcore_id].core_index = count;
 
 		/* init cpuset for per lcore config */
-		CPU_ZERO(&lcore_config[lcore_id].cpuset);
+		//CPU_ZERO(&lcore_config[lcore_id].cpuset);
 		socket_id = eal_cpu_socket_id(lcore_id);
 		printf("sock_id : %d \n", socket_id ); 
 		lcore_to_socket_id[lcore_id] = socket_id;
@@ -1181,7 +1182,7 @@ int main(){
 	printf("\n \n MLX5_INLINE_HSIZE_NONE :%d, \n MLX5_INLINE_HSIZE_L2 %d,\n MLX5_INLINE_HSIZE_L3: %d, \n MLX5_INLINE_HSIZE_L4 : %d, \n  MLX5_INLINE_HSIZE_INNER_L2 : %d \n  MLX5_INLINE_HSIZE_INNER_L2 : %d \n MLX5_INLINE_HSIZE_INNER_L4 : %d \n \n , ", 
 			MLX5_INLINE_HSIZE_NONE, MLX5_INLINE_HSIZE_L2, MLX5_INLINE_HSIZE_L3, MLX5_INLINE_HSIZE_L4, MLX5_INLINE_HSIZE_INNER_L2, MLX5_INLINE_HSIZE_INNER_L3, MLX5_INLINE_HSIZE_INNER_L4); 
 
-	printf("charc %c, %c sizeof(mlx5w) %d  sizeof(mlx5_wqe) %d \n", 3["a"], 3["axycbw"],sizeof(mlx5w),sizeof(mlx5_wqe)); 
+	printf("charc %c, %c sizeof(mlx5w) %d  sizeof(mlx5_wqe) %d \n", 3["a"], 3["axycbw"],sizeof(struct mlx5w),sizeof(struct mlx5_wqe)); 
 	printf("\n\n\n");
 
 	int x = 10, y = 2, z; 
