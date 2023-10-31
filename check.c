@@ -464,6 +464,11 @@ struct rte_bus {
 	//	rte_bus_cleanup_t cleanup;   /**< Cleanup devices on bus */
 };
 
+struct rte_bus_aux {
+	RTE_TAILQ_ENTRY(rte_bus) next; /**< Next bus object in linked list */
+	const char *name;            /**< Name of the bus */
+
+};
 
 #define RTE_PRIORITY_LOG 101
 #define RTE_PRIORITY_BUS 110
