@@ -467,7 +467,7 @@ struct rte_bus {
 struct rte_bus_aux {
 	RTE_TAILQ_ENTRY(rte_bus) next; /**< Next bus object in linked list */
 	const char *name;            /**< Name of the bus */
-
+	const char *scan;           /**< Scan for devices attached to bus */
 };
 
 #define RTE_PRIORITY_LOG 101
