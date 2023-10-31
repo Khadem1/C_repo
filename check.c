@@ -1257,8 +1257,15 @@ int main(){
 		printf("Condition true RTE_BIT32 : %d \n",RTE_BIT32(MLX5_GRAPH_NODE_LEN_FIXED));
 	}
 
+	/**
+	 * Adding a value to a pointer with macro 
+	*/
+	uint32_t *pt;
+	int a5 = 5;
+	pt = &a5;
 
-	
+	printf("\n RTE_PTR_ADD(*ptr, 1) %d \n", RTE_PTR_ADD(*pt, 100)); 
+	printf("\n RTE_PTR_ADD(*ptr, 1) %d \n", RTE_PTR_SUB(*pt, 1)); 
 	func2(1,2);
 	 
 	fun(); 
