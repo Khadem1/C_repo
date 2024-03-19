@@ -6,6 +6,7 @@
 #include <sys/queue.h>
 #include <math.h>
 #include <stdbool.h>
+#include<ctype.h>
 /*
 #include "./headers/rte_ether.h"
 #include <headers/rte_ip.h>
@@ -169,35 +170,7 @@ typedef struct c
 
 };
 
-struct logical_port{
-	uint32_t mac_port; 
-	uint32_t PINs; 
-	uint32_t lpbk_port; 
-};
-/*
-struct MVP {
-	bool mvp_port_indicator[3] = {0,0,0}; 
-	logical_port dst_port;  
-}; */ 
-/*
-// 3 parts involved in Output Logical Port Generations: 
-1) Match Action setting a logical Port 
-2) VLAN logical port filtering 
-3) Adding Promiscuous Ports */
-/*
-void logical_port_gen(struct MVP obj1, struct logical_port logical_port1){
 
-	if (obj1.mvp_port_indicator[0] == true){
-		logical_port1.mac_port = 0xffffffff; 
-	}
-	else if (obj1.mvp_port_indicator[1] == true){
-		logical_port1.lpbk_port = 0xffffffff; 
-	}
-	else {
-		logical_port1.PINs = 0xffffffff; 
-	}
-}
-*/
 /**
  * show_mem_rep() shows the number to stored in memory location. 
  * It will show whether the device under test is saving the number 
@@ -736,41 +709,6 @@ rte_combine64ms1b(uint64_t v)
 }
 
 
-/*
-
-   uint64_t
-   rte_str_to_size(const char *str)
-   {
-   char *endptr;
-   unsigned long long size;
-
-   while (isspace((int)*str))
-   str++;
-   if (*str == '-')
-   return 0;
-
-   errno = 0;
-   size = strtoull(str, &endptr, 0);
-   if (errno)
-   return 0;
-
-   if (*endptr == ' ')
-   endptr++; /* allow 1 space gap */
-
-//	switch (*endptr) {
-//	case 'G': case 'g':
-//		size *= 1024; /* fall-through */
-//	case 'M': case 'm':
-//		size *= 1024; /* fall-through */
-//	case 'K': case 'k':
-//		size *= 1024; /* fall-through */
-//	default:
-//		break;
-//	}
-//	return size;
-//}*/
-
-
 #define RTE_ETHER_ADDR_LEN  6 /**< Length of Ethernet address. */
 #define RTE_ETHER_TYPE_LEN  2 /**< Length of Ethernet type field. */
 #define RTE_ETHER_CRC_LEN   4 /**< Length of Ethernet CRC. */
@@ -893,90 +831,21 @@ struct rte_vxlan_hdr {
 	do { if (1) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, \
 			__LINE__, __func__, __VA_ARGS__); } while (0)
 
-// ................... APC ............//
-#define MAX_ACTION_PAGES 15
-#define APC_PAGE_MAX_INST 4
-
-/* Local Defines/Enums/Structures */
-typedef enum
-{
-	ISA_OPCODE_NOP=0,
-	ISA_OPCODE_WRITE,
-	ISA_OPCODE_WRITE_DOUBLE,
-	ISA_OPCODE_WRITE_META,
-	ISA_OPCODE_INSERT,
-	ISA_OPCODE_REMOVE,
-	ISA_OPCODE_SET_PINS,
-	ISA_OPCODE_ADD,
-	ISA_OPCODE_SUBTRACT,
-	ISA_OPCODE_COUNT,
-	ISA_OPCODE_MOVE_TO_META,
-	ISA_OPCODE_MOVE_TO_HEADER,
-	ISA_OPCODE_ADD_META,
-	ISA_OPCODE_SUBTRACT_META,
-	ISA_OPCODE_INSERT_MULTIPLE,
-	ISA_OPCODE_ENCAP,
-	ISA_OPCODE_DECAP,
-	ISA_OPCODE_RSS,
-	ISA_OPCODE_DROP,
-	ISA_OPCODE_RECIRCULATE,
-	ISA_OPCODE_EXTENSION,
-	ISA_OPCODE_EXTENSION_DOUBLE,
-	ISA_OPCODE_RESERVED
-} isa_instruction_opcode_t;
-
-typedef struct __attribute__ ((packed)) 
-{
-	isa_instruction_opcode_t    opcode:8;
-	uint8_t                     header_id;
-	uint8_t                     offset:6;
-	uint16_t                    operand_2:10;
-	uint32_t                    operand_1;
-	uint32_t                    operand_0;
-	uint32_t                    operand_3;    
-} action_instruction_t;
-
-typedef struct __attribute__ ((packed)) 
-{
-	isa_instruction_opcode_t    opcode:8;
-	uint16_t                    encapPtid[4];
-	uint8_t                     encapheaderoffset[4];
-	uint8_t                     encaptptidlength:5;
-	uint8_t                     encap_header_offset_length:3;
-	uint8_t                     length;
-	uint8_t                     operands[109];
-} encap_instruction_t;
-
-typedef struct __attribute__ ((packed))
-{
-	action_instruction_t            instruction[APC_PAGE_MAX_INST];
-} action_program_page_t ;
-
-typedef struct __attribute__ ((packed))
-{
-	encap_instruction_t             instruction;
-} encap_instruction_page_t;
-
-typedef struct __attribute__ ((packed)) 
-{
-	uint8_t count; //  count = MAX_ACTION_PAGES; 
-	action_program_page_t pages[];
-} action_pages_t;
 
 //....................................
 
 #define A 
 int fun()
 {
-#ifndef A 
-#ifndef B 
+	#ifndef A 
+	#ifndef B 
 
-#else
-printf("Case B is executed \n"); 
-#endif
-#else 
-printf("Case A is executed \n"); 
-#endif
+	#else
+		printf("Case B is executed \n"); 
+	#endif
+	#else 
+		printf("Case A is executed \n"); 
+	#endif
 }
 /**
  * Checking whether int fun(); (decleration) means different in C and C++ as found: 
@@ -1010,6 +879,37 @@ enum mlx5_parse_graph_node_len_mode {
 #define RTE_BIT32(nr) (UINT32_C(1) << (nr))
 
 
+#define warn(fmt, ...) do {\
+	fprintf(stderr, "[WARN ] %s:%d %s(): " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__);\
+} while(0)
+
+static void hexdump(void* void_ptr, size_t len) {
+	uint8_t* ptr = (uint8_t*) void_ptr;
+	char ascii[17];
+	for (uint32_t i = 0; i < len; i += 16) {
+		printf("%06x: ", i);
+		int j = 0;
+		for (; j < 16 && i + j < len; j++) {
+			printf("%02x", ptr[i + j]);
+			if (j % 2) {
+				printf(" ");
+			}
+			ascii[j] = isprint(ptr[i + j]) ? ptr[i + j] : '.';
+		}
+		ascii[j] = '\0';
+		if (j < 16) {
+			for (; j < 16; j++) {
+				printf("  ");
+				if (j % 2) {
+					printf(" ");
+				}
+			}
+		}
+		printf("  %s\n", ascii);
+	}
+}
+
+
 int main(){
 	//.......  This logic implements encap/decap to the specified location ...................
 	unsigned char original_pkt[62]; 
@@ -1024,7 +924,12 @@ int main(){
 	for (int i = 0; i < sizeof(original_pkt); i++)
 	{
 		printf("%x ",original_pkt[i]);
-	}    
+	}
+
+	printf("\n \n"); 
+
+	hexdump(original_pkt,sizeof(original_pkt)); 
+
 	printf("\n \n"); 
 
 	struct a obja1; 
@@ -1198,6 +1103,7 @@ int main(){
 
 		debug_print("x (%d) > y (%d)\n", x, y);
 		debug_print("x (%d) > y (%d)\n", x, y);
+		warn("x (%d) > y (%d) \n",x, y); 
 	}
 	else
 		z = x-y;
@@ -1239,17 +1145,7 @@ int main(){
 	printf("Value at arr[1]: %d\n", *ptr2[1]);
 	printf("Value at arr[1]: %d\n", **ptr3);
 
-	action_pages_t *action_pages = (action_pages_t *)malloc(sizeof(action_pages_t) + sizeof(action_program_page_t) * MAX_ACTION_PAGES);
-	action_pages->count = 0;
-
-	action_program_page_t *inst_program = (action_program_page_t *)&action_pages->pages[0];
-	encap_instruction_page_t *inst_program_encap = (encap_instruction_page_t *)&action_pages->pages[0];
-
-	printf("\n size of action_pages_t %d \n",sizeof(action_pages));
-	printf("\n size of action program page %d \n",sizeof(action_program_page_t)); 
-	printf("\n size of encap_instrction_page_t :%d \n", sizeof(encap_instruction_page_t)); 
-	printf("\n size of encap/action program page : %d \n", (sizeof(encap_instruction_page_t)/sizeof(action_program_page_t)));
-
+	
 	printf("MLX5_SRTCM_XBS_MAX %llx \n", MLX5_SRTCM_XBS_MAX);
 	printf("MLX5_SRTCM_XIR_MAX %llx \n", MLX5_SRTCM_XIR_MAX);
 
@@ -1260,7 +1156,7 @@ int main(){
 	/**
 	 * Adding a value to a pointer with macro 
 	*/
-	uint32_t *pt;
+	int *pt;
 	int a5 = 5;
 	pt = &a5;
 
