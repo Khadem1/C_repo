@@ -121,12 +121,10 @@ struct icmp_hdr{
     unsigned char time_stamp[8]; 
     unsigned char data[48];   
 };
-
 struct VLAN{
     uint16_t priority; 
     uint16_t tag_proto_ident; //TPID 
 };
-
 struct tcp_hdr{
     uint16_t source_port;
     uint16_t destination_port; 
@@ -137,7 +135,6 @@ struct tcp_hdr{
     uint16_t checksum; 
     uint16_t urgent_pointer;
 };
-
 struct gre_hdr
 {
     uint8_t version; 
@@ -146,7 +143,6 @@ struct gre_hdr
     uint32_t VNI:24; 
     uint8_t reserved; 
 };
-
 struct  ipv6_hdr
 {
     uint8_t version:4; 
@@ -158,7 +154,6 @@ struct  ipv6_hdr
     unsigned char src_addr[16];
     unsigned char dst_addr[16];  
 };
-
 struct arp_hdr
 {
     u_int16_t hw_type; 
@@ -171,3 +166,13 @@ struct arp_hdr
     unsigned char target_mac[6];
     uint32_t target_ip_addr;
 };
+struct infiniband{
+    uint8_t opcode; 
+    u_int16_t partition_key; 
+    uint8_t reserved;
+    u_int32_t dest_QP : 24;
+    u_int8_t ack_req; 
+    u_int32_t psn : 24;
+    unsigned char data[16]; 
+    u_int32_t icrc; 
+}; 

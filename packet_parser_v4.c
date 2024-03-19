@@ -18,7 +18,8 @@ void packet_parser(){
     struct ipv6_hdr ipv6_hdr1; 
     struct arp_hdr arp_hdr1;   
     struct tcp_hdr tcp_hdr1; 
-    struct gre_hdr gre_hdr1;  
+    struct gre_hdr gre_hdr1;
+    struct infiniband infiniband_hdr; 
     
     memcpy(&eth1,buff,sizeof(buff)); 
     if (ntohs(eth1.ethertype)==0x0800){  // IPV4 header 
@@ -39,7 +40,8 @@ void packet_parser(){
                 memcpy(&vxlan_hdr1,buff+42,sizeof(buff)); // Vxlan header 
             }
             else if(ntohs(udp_hdr1.dest_port)==0x12b7){
-                printf("Infinband header \n"); 
+                   printf("Infinband header \n"); 
+                   memcpy(&infiniband_hdr,buff+42,sizeof(buff)); // infinband header
             }
         }  
     }
