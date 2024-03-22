@@ -908,7 +908,53 @@ static void hexdump(void* void_ptr, size_t len) {
 		printf("  %s\n", ascii);
 	}
 }
+/**
+ * Parsing speed parameter from command line args
+ * @param arg 
+ * 		Speed provided from command line arguments 
+ * @return
+ * 		Speed calcualted according to the unit      
+*/
+static int64_t
+demu_parse_speed(const char *arg)
+{
+	int64_t speed, base = 1;
+	char *end = NULL;
 
+	speed = strtoul(arg, &end, 10);
+	if (end != NULL) {
+		char unit = *end;
+
+		switch (unit) {
+			case 'k':
+			case 'K':
+				base = 1000;
+				break;
+			case 'm':
+			case 'M':
+				base = 1000 * 1000;
+				break;
+			case 'g':
+			case 'G':
+				if (speed > 10) return -1;
+				base = 1000 * 1000 * 1000;
+				break;
+			default:
+				return -1;
+		}
+		end++;
+	}
+
+	if (arg[0] == '\0' || end == NULL || *end != '\0') {
+		return -1;
+	}
+
+	speed = speed * base;
+	if (speed < 1000 && 10000000000 < speed)
+		return -1;
+
+	return speed;
+}
 
 int main(){
 	//.......  This logic implements encap/decap to the specified location ...................
@@ -1165,6 +1211,13 @@ int main(){
 	func2(1,2);
 	 
 	fun(); 
+
+	const char *arg="1000k"; 
+	int64_t speed, base = 1;
+	char *end = NULL;
+    speed= demu_parse_speed(arg); 
+	// speed = strtoul(arg, &end, 10);
+	printf("Speed obtained from command line args %u \n", speed); 
 
 	return 0; 
 }
