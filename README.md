@@ -14,3 +14,4 @@ eth / ipv6 / tcp
 eth / vlan / ipv6 / udp
 eth / vlan / ipv6 / tcp
 ```
+The parser will be also extented for QinQ packets. 
