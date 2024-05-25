@@ -15,4 +15,4 @@ eth / vlan / ipv6 / udp
 eth / vlan / ipv6 / tcp
 ```
 The parser will be also extented for QinQ packets. 
-This repository also comprises many other usefull implementations to be found easily for reference. 
+This repository also comprises many other usefull implementations to be found easily for reference. The possible test cases will be updated soon. 
