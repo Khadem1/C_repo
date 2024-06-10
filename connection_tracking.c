@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,6 +28,7 @@ typedef struct tcpstate {
 #define IPF_TCPS_TIME_WAIT      7
 
 #define MAX_STATES 1024
+#define MAXACKWINDOW 66000
 
 tcpstate_t *state_table[MAX_STATES] = {NULL};
 
@@ -38,10 +40,6 @@ void add_state(tcpstate_t *state) {
     unsigned int hash = hash_func(*(struct in_addr *)&state->ts_data[0].td_end,
                                   *(struct in_addr *)&state->ts_data[1].td_end,
                                   state->ts_sport, state->ts_dport);
-    state->ts_data[0].td_end = state->ts_data[0].td_maxend;
-    state->ts_data[1].td_end = state->ts_data[1].td_maxend;
-    state->ts_state[0] = IPF_TCPS_LISTEN;
-    state->ts_state[1] = IPF_TCPS_LISTEN;
     state_table[hash] = state;
 }
 
@@ -56,6 +54,22 @@ void remove_state(tcpstate_t *state) {
                                   state->ts_sport, state->ts_dport);
     state_table[hash] = NULL;
     free(state);
+}
+
+#define SEQ_GT(a, b) ((int)((a) - (b)) > 0)
+#define SEQ_GE(a, b) ((int)((a) - (b)) >= 0)
+
+void initialize_state(tcpstate_t *state, struct ip *ip, struct tcphdr *tcp) {
+    state->ts_data[0].td_end = ntohl(tcp->th_seq) + ip->ip_len - (ip->ip_hl << 2) - (tcp->th_off << 2) + ((tcp->th_flags & TH_SYN) ? 1 : 0) + ((tcp->th_flags & TH_FIN) ? 1 : 0);
+    state->ts_data[0].td_maxend = state->ts_data[0].td_end;
+    state->ts_data[1].td_end = 0;
+    state->ts_data[1].td_maxend = 0;
+    state->ts_data[1].td_maxwin = 1;
+    state->ts_data[0].td_maxwin = ntohs(tcp->th_win);
+    if (state->ts_data[0].td_maxwin == 0)
+        state->ts_data[0].td_maxwin = 1;
+    state->ts_state[0] = IPF_TCPS_LISTEN;
+    state->ts_state[1] = IPF_TCPS_LISTEN;
 }
 
 int check_seq_ack(tcpstate_t *state, struct tcphdr *tcp) {
@@ -74,57 +88,48 @@ int check_seq_ack(tcpstate_t *state, struct tcphdr *tcp) {
     return 1; // Valid sequence and acknowledgment numbers
 }
 
-void tcp_state_transition(tcpstate_t *state, struct tcphdr *tcp) {
-    switch (state->ts_state[0]) {
-        case IPF_TCPS_LISTEN:
-            if (tcp->th_flags & TH_SYN) {
-                state->ts_state[0] = IPF_TCPS_SYN_SENT;
-                state->ts_data[0].td_maxwin = ntohs(tcp->th_win);
-                state->ts_data[0].td_maxend = ntohl(tcp->th_seq) + 1;
-            }
-            break;
-        case IPF_TCPS_SYN_SENT:
-            if ((tcp->th_flags & (TH_SYN | TH_ACK)) == (TH_SYN | TH_ACK)) {
-                state->ts_state[0] = IPF_TCPS_SYN_RECEIVED;
-                state->ts_data[1].td_maxwin = ntohs(tcp->th_win);
-                state->ts_data[1].td_maxend = ntohl(tcp->th_seq) + 1;
-            }
-            break;
-        case IPF_TCPS_SYN_RECEIVED:
-            if (tcp->th_flags & TH_ACK) {
-                state->ts_state[0] = IPF_TCPS_ESTABLISHED;
-                state->ts_data[0].td_end = ntohl(tcp->th_ack);
-                state->ts_data[1].td_end = ntohl(tcp->th_seq) + (tcp->th_flags & TH_FIN ? 1 : 0);
-            }
-            break;
-        case IPF_TCPS_ESTABLISHED:
-            if (tcp->th_flags & TH_FIN) {
-                state->ts_state[0] = IPF_TCPS_FIN_WAIT_1;
-                state->ts_data[0].td_maxend = ntohl(tcp->th_seq) + 1;
-            }
-            break;
-        case IPF_TCPS_FIN_WAIT_1:
-            if (tcp->th_flags & TH_ACK) {
-                state->ts_state[0] = IPF_TCPS_FIN_WAIT_2;
-                state->ts_data[1].td_end = ntohl(tcp->th_ack);
-            }
-            break;
-        case IPF_TCPS_FIN_WAIT_2:
-            if (tcp->th_flags & TH_FIN) {
-                state->ts_state[0] = IPF_TCPS_TIME_WAIT;
-                state->ts_data[0].td_maxend = ntohl(tcp->th_seq) + 1;
-            }
-            break;
-        case IPF_TCPS_TIME_WAIT:
-            if (tcp->th_flags & TH_ACK) {
-                state->ts_state[0] = IPF_TCPS_CLOSED;
-                remove_state(state);
-            }
-            break;
-        case IPF_TCPS_CLOSED:
-            break;
-        default:
-            break;
+void tcp_state_transition(tcpstate_t *state, struct tcphdr *tcp, struct ip *ip) {
+    u_int32_t seq = ntohl(tcp->th_seq);
+    u_int32_t ack = ntohl(tcp->th_ack);
+    u_short win = ntohs(tcp->th_win);
+    u_int32_t end = seq + ip->ip_len - (ip->ip_hl << 2) - (tcp->th_off << 2) + ((tcp->th_flags & TH_SYN) ? 1 : 0) + ((tcp->th_flags & TH_FIN) ? 1 : 0);
+    tcpdata_t *fdata, *tdata;
+    int source = (ip->ip_src.s_addr == state->ts_sport);
+
+    fdata = &state->ts_data[!source];
+    tdata = &state->ts_data[source];
+
+    if (fdata->td_end == 0) {
+        fdata->td_end = end;
+        fdata->td_maxwin = 1;
+        fdata->td_maxend = end + 1;
+    }
+
+    if (!(tcp->th_flags & TH_ACK)) {
+        ack = tdata->td_end;
+    } else if (((tcp->th_flags & (TH_ACK|TH_RST)) == (TH_ACK|TH_RST)) && (ack == 0)) {
+        ack = tdata->td_end;
+    }
+
+    if (seq == end)
+        seq = end = fdata->td_end;
+
+    int maxwin = tdata->td_maxwin;
+    int ackskew = tdata->td_end - ack;
+
+    if ((SEQ_GE(fdata->td_maxend, end)) &&
+        (SEQ_GE(seq, fdata->td_end - maxwin)) &&
+        (ackskew >= -MAXACKWINDOW) &&
+        (ackskew <= MAXACKWINDOW)) {
+
+        if (ackskew < 0)
+            tdata->td_end = ack;
+
+        if (fdata->td_maxwin < win)
+            fdata->td_maxwin = win;
+
+        if (SEQ_GT(end, fdata->td_end))
+            fdata->td_end = end;
     }
 }
 
@@ -140,7 +145,7 @@ void process_packet(struct ip *iph, struct tcphdr *tcp) {
         memset(state, 0, sizeof(tcpstate_t));
         state->ts_sport = sport;
         state->ts_dport = dport;
-        state->ts_data[0].td_end = ntohl(tcp->th_seq) + 1;
+        initialize_state(state, iph, tcp);
         add_state(state);
     }
     
@@ -149,7 +154,7 @@ void process_packet(struct ip *iph, struct tcphdr *tcp) {
         return; // Drop the packet
     }
 
-    tcp_state_transition(state, tcp);
+    tcp_state_transition(state, tcp, iph);
 }
 
 int main() {
@@ -164,11 +169,11 @@ int main() {
     tcph.th_dport = htons(80);
     tcph.th_flags = TH_SYN;
     tcph.th_win = htons(65535);
-    tcph.th_seq = htonl(0);
-    tcph.th_ack = htonl(0);
+    tcph.th_seq = htonl(57000);
+    tcph.th_seq = htonl(57000);
+
 
     process_packet(&iph, &tcph);
 
     return 0;
 }
-
