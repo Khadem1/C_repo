@@ -956,6 +956,88 @@ demu_parse_speed(const char *arg)
 	return speed;
 }
 
+int ff1(){
+	int i=1; 
+	switch (i)
+	{
+	case 1:
+		printf("case 1 is executed \n"); 
+		i=2; 
+		break;
+	
+	case 2:
+		printf("case 2 is executed \n"); 
+		break;
+	}
+}
+
+/* Xmacro used to create generic item setter from items */
+/*
+#define LIST_OF_FIELDS_INFO \
+	X(SET_BE16,	eth_type,		v->hdr.ether_type,		rte_flow_item_eth) \
+	X(SET_BE32P,	eth_smac_47_16,		&v->hdr.src_addr.addr_bytes[0],	rte_flow_item_eth) \
+	X(SET_BE16P,	eth_smac_15_0,		&v->hdr.src_addr.addr_bytes[4],	rte_flow_item_eth) \
+	X(SET_BE32P,	eth_dmac_47_16,		&v->hdr.dst_addr.addr_bytes[0],	rte_flow_item_eth) \
+	X(SET_BE16P,	eth_dmac_15_0,		&v->hdr.dst_addr.addr_bytes[4],	rte_flow_item_eth) \
+	X(SET_BE16,	tci,			v->hdr.vlan_tci,		rte_flow_item_vlan) \
+	X(SET,		ipv4_ihl,		v->ihl,			rte_ipv4_hdr) \
+	X(SET,		ipv4_tos,		v->type_of_service,	rte_ipv4_hdr) \
+	X(SET,		ipv4_time_to_live,	v->time_to_live,	rte_ipv4_hdr) \
+	X(SET_BE32,	ipv4_dst_addr,		v->dst_addr,		rte_ipv4_hdr) \
+	X(SET_BE32,	ipv4_src_addr,		v->src_addr,		rte_ipv4_hdr) \
+	X(SET,		ipv4_next_proto,	v->next_proto_id,	rte_ipv4_hdr) \
+	X(SET,		ipv4_version,		STE_IPV4,		rte_ipv4_hdr) \
+	X(SET_BE16,	ipv4_frag,		v->fragment_offset,	rte_ipv4_hdr) \
+	X(SET_BE16,	ipv4_len,		v->total_length,	rte_ipv4_hdr) \
+	X(SET,          ip_fragmented,          !!v->fragment_offset,   rte_ipv4_hdr) \
+	X(SET_BE16,	ipv6_payload_len,	v->hdr.payload_len,	rte_flow_item_ipv6) \
+	X(SET,		ipv6_proto,		v->hdr.proto,		rte_flow_item_ipv6) \
+	X(SET,		ipv6_routing_hdr,	IPPROTO_ROUTING,	rte_flow_item_ipv6) \
+	X(SET,		ipv6_hop_limits,	v->hdr.hop_limits,	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_src_addr_127_96,	&v->hdr.src_addr[0],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_src_addr_95_64,	&v->hdr.src_addr[4],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_src_addr_63_32,	&v->hdr.src_addr[8],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_src_addr_31_0,	&v->hdr.src_addr[12],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_dst_addr_127_96,	&v->hdr.dst_addr[0],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_dst_addr_95_64,	&v->hdr.dst_addr[4],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_dst_addr_63_32,	&v->hdr.dst_addr[8],	rte_flow_item_ipv6) \
+	X(SET_BE32P,	ipv6_dst_addr_31_0,	&v->hdr.dst_addr[12],	rte_flow_item_ipv6) \
+	X(SET,		ipv6_version,		STE_IPV6,		rte_flow_item_ipv6) \
+	X(SET,		ipv6_frag,		v->has_frag_ext,	rte_flow_item_ipv6) \
+	X(SET,		icmp_protocol,		STE_ICMP,		rte_flow_item_icmp) \
+	X(SET,		udp_protocol,		STE_UDP,		rte_flow_item_udp) \
+	X(SET_BE16,	udp_src_port,		v->hdr.src_port,	rte_flow_item_udp) \
+	X(SET_BE16,	udp_dst_port,		v->hdr.dst_port,	rte_flow_item_udp) \
+	X(SET,		tcp_flags,		v->hdr.tcp_flags,	rte_flow_item_tcp) \
+	X(SET,		tcp_protocol,		STE_TCP,		rte_flow_item_tcp) \
+	X(SET_BE16,	tcp_src_port,		v->hdr.src_port,	rte_flow_item_tcp) \
+	X(SET_BE16,	tcp_dst_port,		v->hdr.dst_port,	rte_flow_item_tcp) \
+	X(SET,		gtp_udp_port,		RTE_GTPU_UDP_PORT,	rte_flow_item_gtp) \
+	X(SET_BE32,	gtp_teid,		v->hdr.teid,		rte_flow_item_gtp) \
+	X(SET,		gtp_msg_type,		v->hdr.msg_type,	rte_flow_item_gtp) \
+	X(SET,		gtp_ext_flag,		!!v->hdr.gtp_hdr_info,	rte_flow_item_gtp) \
+	X(SET,		gtp_next_ext_hdr,	GTP_PDU_SC,		rte_flow_item_gtp_psc) \
+	X(SET,		gtp_ext_hdr_pdu,	v->hdr.type,		rte_flow_item_gtp_psc) \
+	X(SET,		gtp_ext_hdr_qfi,	v->hdr.qfi,		rte_flow_item_gtp_psc) \
+	X(SET,		vxlan_flags,		v->flags,		rte_flow_item_vxlan) \
+	X(SET,		vxlan_udp_port,		ETH_VXLAN_DEFAULT_PORT,	rte_flow_item_vxlan) \
+	X(SET,		mpls_udp_port,		IP_UDP_PORT_MPLS,	rte_flow_item_mpls) \
+	X(SET,		source_qp,		v->queue,		mlx5_rte_flow_item_sq) \
+	X(SET,		tag,			v->data,		rte_flow_item_tag) \
+	X(SET,		metadata,		v->data,		rte_flow_item_meta) \
+	X(SET_BE16,	gre_c_ver,		v->c_rsvd0_ver,		rte_flow_item_gre) \
+	X(SET_BE16,	gre_protocol_type,	v->protocol,		rte_flow_item_gre) \
+	X(SET,		ipv4_protocol_gre,	IPPROTO_GRE,		rte_flow_item_gre) \
+	X(SET_BE32,	gre_opt_key,		v->key.key,		rte_flow_item_gre_opt) \
+	X(SET_BE32,	gre_opt_seq,		v->sequence.sequence,	rte_flow_item_gre_opt) \
+	X(SET_BE16,	gre_opt_checksum,	v->checksum_rsvd.checksum,	rte_flow_item_gre_opt) \
+	X(SET,		meter_color,		rte_col_2_mlx5_col(v->color),	rte_flow_item_meter_color) \
+	X(SET_BE32,     ipsec_spi,              v->hdr.spi,             rte_flow_item_esp) \
+	X(SET_BE32,     ipsec_sequence_number,  v->hdr.seq,             rte_flow_item_esp) \
+	X(SET,		ib_l4_udp_port,		UDP_ROCEV2_PORT,	rte_flow_item_ib_bth) \
+	X(SET,		ib_l4_opcode,		v->hdr.opcode,		rte_flow_item_ib_bth) \
+	X(SET,		ib_l4_bth_a,		v->hdr.a,		rte_flow_item_ib_bth) \
+	*/
 int main(){
 	//.......  This logic implements encap/decap to the specified location ...................
 	unsigned char original_pkt[62]; 
@@ -1218,6 +1300,8 @@ int main(){
     speed= demu_parse_speed(arg); 
 	// speed = strtoul(arg, &end, 10);
 	printf("Speed obtained from command line args %u \n", speed); 
+
+	ff1(); 
 
 	return 0; 
 }
