@@ -1,0 +1,8 @@
+name	bert
+location	home
+website	github
+first	A
+double	AA
+last	Z
+name	bert
+
